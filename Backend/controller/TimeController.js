@@ -7,7 +7,6 @@ export const TimeSave = async (req, res) => {
         if (!newDate || !timeIn || !timeOut || !totalHour)
             return res.json({ success: false, message: "Missind details" });
         const response = await TimeSchema.create({ newDate, timeIn, timeOut, totalHour });
-
         return res.json({ success: true, message: "Time entry saved", response });
 
     }
