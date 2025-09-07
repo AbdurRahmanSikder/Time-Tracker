@@ -6,7 +6,7 @@ import TimeRouter from "./routes/timeRoutes.js";
 const app = express();
 app.use(express.json());
 const port = process.env.PORT || 5000;
-const originAllowed = ['http://localhost:5173', 'https://time-tracker-gb4a.vercel.app'];
+const originAllowed = ['http://localhost:5173', 'https://time040.vercel.app'];
 
 app.use(cors({
     origin: originAllowed,
