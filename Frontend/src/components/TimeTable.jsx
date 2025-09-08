@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { convertToHour, countActiveDaysCurrentMonth} from '@/helper';
+import { convertToHour, countActiveDaysCurrentMonth, NumberOfWorkingDays} from '@/helper';
 import { useTimeContext } from '@/context/timeContext';
 import {
   Table,
@@ -52,9 +52,11 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
   
   const totalworkingHour = totalHours(timeEntries);
   const ActiveDays = countActiveDaysCurrentMonth();
-  const RequireTimeRate = (200 - (convertToHour(totalworkingHour))) /  ActiveDays.Next;
-  console.log(convertToHour(ActiveDays.Current));
-  const CurrentTimeRate = convertToHour(totalworkingHour) /  ActiveDays.Current;
+  const CurrentWorkingDays = NumberOfWorkingDays(timeEntries);
+  console.log(CurrentWorkingDays);
+  const RequireTimeRate = (200 - (convertToHour(totalworkingHour))) /  (ActiveDays - CurrentWorkingDays);
+  const CurrentTimeRate = convertToHour(totalworkingHour) /  CurrentWorkingDays;
+
   return (
     <div className='max-w-md mx-auto my-8 bg-white border-2 border-gray-300 rounded-xl shadow-lg overflow-hidden'>
       <Table className="w-full ">

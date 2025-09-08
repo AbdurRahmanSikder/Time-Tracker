@@ -74,11 +74,9 @@ export function countActiveDaysCurrentMonth() {
     const weekday = date.getDay(); // 0=Sunday ... 6=Saturday
     if (weekday !== 5 && weekday !== 6) { // skip Friday and Saturday
       count++;
-      if (day <= Today)
-        count2++;
     }
   }
-  return { Total: count, Current: count2, Next: (count - Today) };
+  return count;
 }
 
 export function convertToHour(time) {
@@ -93,4 +91,10 @@ export function convertToHour(time) {
       arr.push(Number(s));
   }
   return arr[0]+arr[1]/60;
+}
+
+export const NumberOfWorkingDays = (timeEntry) => {
+  const uniqueDays = new Set(timeEntry);
+  const workingDays = [...uniqueDays];
+  return workingDays.length;
 }
