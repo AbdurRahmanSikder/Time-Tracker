@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { convertToHour, countActiveDaysCurrentMonth, NumberOfWorkingDays} from '@/helper';
+import { convertToHour, countActiveDaysCurrentMonth, NumberOfWorkingDays, decimalToTime} from '@/helper';
 import { useTimeContext } from '@/context/timeContext';
 import {
   Table,
@@ -53,12 +53,12 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const totalworkingHour = totalHours(timeEntries);
   const ActiveDays = countActiveDaysCurrentMonth();
   const CurrentWorkingDays = NumberOfWorkingDays(timeEntries);
-  console.log(CurrentWorkingDays);
-  const RequireTimeRate = (200 - (convertToHour(totalworkingHour))) /  (ActiveDays - CurrentWorkingDays);
+  console.log(ActiveDays,CurrentWorkingDays);
+  const RequireTimeRate = (200 - (convertToHour(totalworkingHour))) /  (ActiveDays - CurrentWorkingDays - 1);
   const CurrentTimeRate = convertToHour(totalworkingHour) /  CurrentWorkingDays;
 
   return (
-    <div className='max-w-md mx-auto my-8 bg-white border-2 border-gray-300 rounded-xl shadow-lg overflow-hidden'>
+    <div className='max-w-md mx-auto my-8 bg-white border-2 border-gray-300 rounded-xl shadow-lg overflow-hidden print:hidden'>
       <Table className="w-full ">
         <TableBody>
           {/* Date Row */}
@@ -122,10 +122,10 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
         Total Time in This Month: <span className="text-indigo-600">{totalworkingHour}</span>
       </div>
       <div className='px-4 py-3 text-gray-700 font-medium'>
-        Require time rate: <span className="text-indigo-600">{RequireTimeRate}</span>
+        Daily duty hours per day : <span className="text-indigo-600">{decimalToTime(RequireTimeRate)}</span>
       </div>
       <div className='px-4 py-3 text-gray-700 font-medium'>
-        Current time rate: <span className="text-indigo-600">{CurrentTimeRate}</span>
+        Current duty hours per day: <span className="text-indigo-600">{decimalToTime(CurrentTimeRate)}</span>
       </div>
     </div>
 

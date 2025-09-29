@@ -98,3 +98,10 @@ export const NumberOfWorkingDays = (timeEntry) => {
   const workingDays = [...uniqueDays];
   return workingDays.length;
 }
+// time convert
+export function decimalToTime(decimalHours) {
+  const hours = Math.floor(decimalHours); 
+  const minutes = Math.round((decimalHours - hours) * 60);
+  
+  return `${hours} hours ${minutes} mins`;
+}
