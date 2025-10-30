@@ -67,7 +67,7 @@ export function countActiveDaysCurrentMonth() {
   const year = today.getFullYear();
   const month = today.getMonth(); // 0-indexed
   const lastDay = new Date(year, month + 1, 0).getDate(); // last day of month
-  let count = 0, count2 = 0;
+  let count = 0;
 
   for (let day = 1; day <= lastDay; day++) {
     const date = new Date(year, month, day);
@@ -105,3 +105,20 @@ export function decimalToTime(decimalHours) {
   
   return `${hours} hours ${minutes} mins`;
 }
+
+// Format helper
+export const formatDateForInput = (date) => {
+  const [day, month, year] = date.split('/');
+  return `${year}-${month}-${day}`; // Convert dd/mm/yyyy -> yyyy-mm-dd for input
+};
+
+export const formatDateForDisplay = (date) => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// Initialize with today in dd/mm/yyyy
+
