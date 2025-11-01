@@ -73,6 +73,11 @@ const TimeTable = () => {
     }
   };
 
+  const deleteTime = async () => {
+    const response = await axios.delete(`${backendUrl}/api/clear-time`);
+    console.log(response);
+  };
+
   const handleForceSubmit = async () => {
     const response = await axios.post(`${backendUrl}/api/time`, {
       newDate: date,
@@ -176,8 +181,17 @@ const TimeTable = () => {
         </Table>
 
         {/* Submit Button */}
-        <div className="w-full flex justify-center" onClick={submitTime}>
-          <Button className="my-4 mx-auto px-8 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-300 text-lg shadow-md">
+        <div className="w-full flex justify-center">
+          <Button
+            onClick={deleteTime}
+            className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 text-lg shadow-md"
+          >
+            Clear all
+          </Button>
+          <Button
+            onClick={submitTime}
+            className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-300 text-lg shadow-md"
+          >
             Submit
           </Button>
         </div>
