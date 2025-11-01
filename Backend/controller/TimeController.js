@@ -40,3 +40,15 @@ export const TimeDelete = async (req, res) => {
         return res.json({ success: false, message: "Time List can't Deleted" , error });
     }
 }
+
+export const FullMonthTimeDelete = async (req, res) => {
+    try {
+        console.log(req);
+        const response = await TimeSchema.deleteMany({});
+        return res.json({ success: true , message : "Successfully Deleted" , response});
+    }
+    catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: "Time List can't Deleted" , error });
+    }
+}
