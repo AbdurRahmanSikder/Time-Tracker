@@ -34,6 +34,7 @@ const TimeTable = () => {
   const [totalTime, setTotalTime] = useState("00:00");
   const [showWarning, setShowWarning] = useState(false);
   const [showEmptyWarning, setShowEmptyWarning] = useState(false);
+  const [showClearWarning, setShowClearWarning] = useState(false);
 
   // Calculate total hours whenever timeIn or timeOut changes
   useEffect(() => {
@@ -73,9 +74,20 @@ const TimeTable = () => {
     }
   };
 
-  const deleteTime = async () => {
+  const deleteTime = () => {
+    setShowClearWarning(true);
+  };
+
+  const confirmClearAll = async () => {
     const response = await axios.delete(`${backendUrl}/api/clear-time`);
     console.log(response);
+    if (response.data.success) {
+      toast.success("All time entries cleared");
+      setTimeEntries([]);
+    } else {
+      toast.error("Failed to clear time entries");
+    }
+    setShowClearWarning(false);
   };
 
   const handleForceSubmit = async () => {
@@ -117,6 +129,9 @@ const TimeTable = () => {
     (200 - convertToHour(totalworkingHour)) /
     (ActiveDays - CurrentWorkingDays - 1);
   const CurrentTimeRate = convertToHour(totalworkingHour) / CurrentWorkingDays;
+
+  // Check if today is the first day of the month
+  const isFirstDayOfMonth = new Date().getDate() === 1;
 
   return (
     <>
@@ -182,12 +197,14 @@ const TimeTable = () => {
 
         {/* Submit Button */}
         <div className="w-full flex justify-center">
-          <Button
-            onClick={deleteTime}
-            className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 text-lg shadow-md"
-          >
-            Clear all
-          </Button>
+          {isFirstDayOfMonth && (
+            <Button
+              onClick={deleteTime}
+              className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 text-lg shadow-md"
+            >
+              Clear all
+            </Button>
+          )}
           <Button
             onClick={submitTime}
             className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-300 text-lg shadow-md"
@@ -295,6 +312,54 @@ const TimeTable = () => {
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
               >
                 OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Modal */}
+      {showClearWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-100 rounded-full p-2">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">
+                Confirm Clear All
+              </h3>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to clear all time entries? This action
+              cannot be undone.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearWarning(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmClearAll}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Clear All
               </button>
             </div>
           </div>
