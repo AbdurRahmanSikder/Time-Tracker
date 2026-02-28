@@ -1,11 +1,16 @@
 import express from "express";
-import { TimeSave , TimeList, TimeDelete, FullMonthTimeDelete } from "../controller/TimeController.js";
+import { TimeSave, TimeList, TimeDelete, FullMonthTimeDelete, TimeUpdate, GetMonths } from "../controller/TimeController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const TimeRouter = express.Router();
 
-TimeRouter.get("/timelist" , TimeList);
-TimeRouter.post("/time" , TimeSave);
-TimeRouter.delete("/timedelete" , TimeDelete);
-TimeRouter.delete("/clear-time" , FullMonthTimeDelete);
+TimeRouter.use(protect); // Protect all time routes
+
+TimeRouter.get("/months", GetMonths);
+TimeRouter.get("/timelist", TimeList);
+TimeRouter.post("/time", TimeSave);
+TimeRouter.put("/update", TimeUpdate);
+TimeRouter.delete("/timedelete", TimeDelete);
+TimeRouter.delete("/clear-time", FullMonthTimeDelete);
 
 export default TimeRouter;

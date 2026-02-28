@@ -9,17 +9,15 @@ import { useTimeContext } from "@/context/timeContext";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "./ui/button";
 import { calculateTotal, totalHours } from "@/helper";
 
 const TimeTable = () => {
-  const { timeEntries, setTimeEntries, axios, toast } = useTimeContext();
+  const { timeEntries, setTimeEntries, editingEntry, setEditingEntry, timeUpdate, axios, toast, months, selectedMonth, setSelectedMonth, fetchMonths } = useTimeContext();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [date, setDate] = useState(() => {
@@ -32,9 +30,30 @@ const TimeTable = () => {
   const [timeIn, setTimeIn] = useState("00:00");
   const [timeOut, setTimeOut] = useState("00:00");
   const [totalTime, setTotalTime] = useState("00:00");
+  const [officeWork, setOfficeWork] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
   const [showEmptyWarning, setShowEmptyWarning] = useState(false);
   const [showClearWarning, setShowClearWarning] = useState(false);
+
+  // Populate form if editing
+  useEffect(() => {
+    if (editingEntry) {
+      setDate(editingEntry.newDate);
+      setTimeIn(editingEntry.timeIn);
+      setTimeOut(editingEntry.timeOut);
+      setOfficeWork(editingEntry.officeWork);
+    } else {
+      // reset
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      setDate(`${year}-${month}-${day}`);
+      setTimeIn("00:00");
+      setTimeOut("00:00");
+      setOfficeWork(true);
+    }
+  }, [editingEntry]);
 
   // Calculate total hours whenever timeIn or timeOut changes
   useEffect(() => {
@@ -44,6 +63,8 @@ const TimeTable = () => {
   // Check if date already exists
   const checkDuplicateDate = (dateToCheck) => {
     return timeEntries.some((entry) => {
+      // Don't flag duplicate if editing the same entry
+      if (editingEntry && entry.id === editingEntry.id) return false;
       const entryDate = new Date(entry.newDate).toISOString().split("T")[0];
       return entryDate === dateToCheck;
     });
@@ -56,11 +77,23 @@ const TimeTable = () => {
       return;
     }
 
+    if (editingEntry) {
+      await timeUpdate(editingEntry.id, {
+        newDate: date,
+        timeIn,
+        timeOut,
+        totalHour: totalTime,
+        officeWork,
+      });
+      return;
+    }
+
     const response = await axios.post(`${backendUrl}/api/time`, {
       newDate: date,
       timeIn,
       timeOut,
       totalHour: totalTime,
+      officeWork,
     });
 
     if (response.data.success) {
@@ -79,11 +112,12 @@ const TimeTable = () => {
   };
 
   const confirmClearAll = async () => {
-    const response = await axios.delete(`${backendUrl}/api/clear-time`);
-    console.log(response);
+    if (!selectedMonth) return;
+    const response = await axios.delete(`${backendUrl}/api/clear-time?monthId=${selectedMonth.id}`);
     if (response.data.success) {
-      toast.success("All time entries cleared");
+      toast.success(`Cleared entries for ${selectedMonth.name}`);
       setTimeEntries([]);
+      fetchMonths(); // Reload months to reflect deletion
     } else {
       toast.error("Failed to clear time entries");
     }
@@ -91,11 +125,24 @@ const TimeTable = () => {
   };
 
   const handleForceSubmit = async () => {
+    if (editingEntry) {
+      await timeUpdate(editingEntry.id, {
+        newDate: date,
+        timeIn,
+        timeOut,
+        totalHour: totalTime,
+        officeWork,
+      });
+      setShowWarning(false);
+      return;
+    }
+
     const response = await axios.post(`${backendUrl}/api/time`, {
       newDate: date,
       timeIn,
       timeOut,
       totalHour: totalTime,
+      officeWork,
     });
 
     if (response.data.success) {
@@ -117,30 +164,60 @@ const TimeTable = () => {
       setTimeIn("00:00");
       setTimeOut("00:00");
       setTotalTime("00:00");
+      setOfficeWork(true);
     } else {
       toast.error("Something went wrong");
     }
   };
 
   const totalworkingHour = totalHours(timeEntries);
-  const ActiveDays = countActiveDaysCurrentMonth();
+  const ActiveDays = selectedMonth ? countActiveDaysCurrentMonth(selectedMonth.year, selectedMonth.monthNumber) : countActiveDaysCurrentMonth(new Date().getFullYear(), new Date().getMonth() + 1);
   const CurrentWorkingDays = NumberOfWorkingDays(timeEntries);
-  const RequireTimeRate =
-    (200 - convertToHour(totalworkingHour)) /
-    (ActiveDays - CurrentWorkingDays - 1);
   const CurrentTimeRate = convertToHour(totalworkingHour) / CurrentWorkingDays;
 
-  // Check if today is the first day of the month
-  const isFirstDayOfMonth = new Date().getDate() === 1;
+  // Render check
+  const isCurrentMonth = () => {
+    if (!selectedMonth) return true; // Default
+    const today = new Date();
+    return today.getFullYear() === selectedMonth.year && (today.getMonth() + 1) === selectedMonth.monthNumber;
+  };
 
   return (
     <>
-      <div className="max-w-md mx-auto my-8 bg-white border-2 border-gray-300 rounded-xl shadow-lg overflow-hidden print:hidden">
+      <div className="max-w-md mx-auto my-4 text-center">
+        {months.length > 0 && (
+          <select
+            value={selectedMonth?.id || ''}
+            onChange={(e) => {
+              const selected = months.find(m => m.id === Number(e.target.value));
+              if (selected) setSelectedMonth(selected);
+            }}
+            className="px-4 py-2 border-2 border-indigo-400 rounded-lg bg-indigo-50 text-indigo-900 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 appearance-none print:hidden custom-select w-full max-w-[200px] cursor-pointer"
+          >
+            {months.map(month => (
+              <option key={month.id} value={month.id}>{month.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <div className="max-w-md mx-auto my-4 bg-white border-2 border-gray-300 rounded-xl shadow-lg overflow-hidden print:hidden">
+        {editingEntry && (
+          <div className="bg-amber-100 px-4 py-2 border-b border-amber-200 flex justify-between items-center">
+            <span className="text-amber-800 font-medium">Editing Entry</span>
+            <button
+              onClick={() => setEditingEntry(null)}
+              className="text-amber-600 font-bold hover:text-amber-800"
+            >
+              Cancel Edit
+            </button>
+          </div>
+        )}
         <Table className="w-full ">
           <TableBody>
             {/* Date Row */}
             <TableRow className="text-center text-base">
-              <TableHead className="py-2 px-4 font-semibold text-gray-700 bg-gray-50 rounded-tl-xl">
+              <TableHead className="py-2 px-4 font-semibold text-gray-700 bg-gray-50 rounded-tl-xl align-middle">
                 Date
               </TableHead>
               <TableCell className="flex justify-end py-2 px-4 bg-gray-50 rounded-tr-xl">
@@ -155,7 +232,7 @@ const TimeTable = () => {
 
             {/* Time In Row */}
             <TableRow className="text-center odd:bg-gray-50 even:bg-gray-100 text-base">
-              <TableHead className="py-2 px-4 font-semibold text-gray-700">
+              <TableHead className="py-2 px-4 font-semibold text-gray-700 align-middle">
                 Time In
               </TableHead>
               <TableCell className="flex justify-end py-2 px-4">
@@ -170,7 +247,7 @@ const TimeTable = () => {
 
             {/* Time Out Row */}
             <TableRow className="text-center odd:bg-gray-50 even:bg-gray-100 text-base">
-              <TableHead className="py-2 px-4 font-semibold text-gray-700">
+              <TableHead className="py-2 px-4 font-semibold text-gray-700 align-middle">
                 Time Out
               </TableHead>
               <TableCell className="flex justify-end py-2 px-4">
@@ -183,12 +260,27 @@ const TimeTable = () => {
               </TableCell>
             </TableRow>
 
+            {/* Office Work Row */}
+            <TableRow className="text-center odd:bg-gray-50 even:bg-gray-100 text-base">
+              <TableHead className="py-2 px-4 font-semibold text-gray-700 align-middle">
+                Office Work
+              </TableHead>
+              <TableCell className="flex justify-end py-2 px-4">
+                <input
+                  type="checkbox"
+                  checked={officeWork}
+                  onChange={(e) => setOfficeWork(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+              </TableCell>
+            </TableRow>
+
             {/* Total Time Row */}
             <TableRow className="text-center text-base">
-              <TableHead className="py-2 px-4 font-semibold text-gray-700 bg-gray-50 rounded-bl-xl">
+              <TableHead className="py-2 px-4 font-semibold text-gray-700 bg-gray-50 rounded-bl-xl align-middle">
                 Total Time
               </TableHead>
-              <TableCell className="flex justify-end py-2 px-4 bg-gray-50 rounded-br-xl font-medium text-indigo-600">
+              <TableCell className="flex justify-end items-center py-2 px-4 bg-gray-50 rounded-br-xl font-medium text-indigo-600">
                 {totalTime} hour
               </TableCell>
             </TableRow>
@@ -197,19 +289,17 @@ const TimeTable = () => {
 
         {/* Submit Button */}
         <div className="w-full flex justify-center">
-          {isFirstDayOfMonth && (
-            <Button
-              onClick={deleteTime}
-              className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 text-lg shadow-md"
-            >
-              Clear all
-            </Button>
-          )}
+          <Button
+            onClick={deleteTime}
+            className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 text-lg shadow-md"
+          >
+            Clear Month
+          </Button>
           <Button
             onClick={submitTime}
             className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-300 text-lg shadow-md"
           >
-            Submit
+            {editingEntry ? "Update" : "Submit"}
           </Button>
         </div>
 
@@ -223,7 +313,7 @@ const TimeTable = () => {
         <div className="px-4 py-3 text-gray-700 font-medium">
           Current duty hours per day:{" "}
           <span className="text-indigo-600">
-            {decimalToTime(CurrentTimeRate)}
+            {CurrentTimeRate ? decimalToTime(CurrentTimeRate) : "00:00"}
           </span>
         </div>
       </div>
@@ -272,7 +362,7 @@ const TimeTable = () => {
                 onClick={handleForceSubmit}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
               >
-                Add Anyway
+                {editingEntry ? "Update Anyway" : "Add Anyway"}
               </button>
             </div>
           </div>

@@ -1,11 +1,11 @@
 import React from "react";
 import { useTimeContext } from "@/context/timeContext";
-
+import { useAuth } from "@/context/AuthContext";
 import DeleteButton from "./DeleteButton";
+import { PenSquare } from "lucide-react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -23,7 +23,8 @@ const formatDate = (dateString) => {
 };
 
 const TimeList = () => {
-  const { timeEntries, timeDelete } = useTimeContext();
+  const { timeEntries, timeDelete, setEditingEntry, toast } = useTimeContext();
+  const { user } = useAuth();
 
   // Calculate total time for the entire month
   const monthlyTotal = totalHours(timeEntries);
@@ -35,7 +36,9 @@ const TimeList = () => {
 
   return (
     <div className="w-full space-y-4">
-      <p className="text-center text-2xl font-semibold hidden print:block">Abdur Rahman | Office Hours</p>
+      <p className="text-center text-2xl font-semibold hidden print:block">
+        {user?.email || "User"} | Office Hours
+      </p>
       <div className="bg-white rounded-sm overflow-hidden border border-gray-300 print:border-gray-500">
         <div className="overflow-x-auto">
           <Table className="w-full min-w-[700px]">
@@ -51,6 +54,9 @@ const TimeList = () => {
                   Time Out
                 </TableHead>
                 <TableHead className="px-4 py-3 font-bold text-white print:text-black text-center text-base">
+                  Office Work
+                </TableHead>
+                <TableHead className="px-4 py-3 font-bold text-white print:text-black text-center text-base">
                   Total Hours
                 </TableHead>
                 <TableHead className="px-4 py-3 font-bold text-white print:text-black text-center text-base w-32 print:hidden">
@@ -62,7 +68,7 @@ const TimeList = () => {
               {sortedEntries.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center py-12 text-gray-500 text-base"
                   >
                     No time entries found. Add your first entry above.
@@ -72,7 +78,7 @@ const TimeList = () => {
                 <>
                   {sortedEntries.map((entry) => (
                     <TableRow
-                      key={entry._id}
+                      key={entry.id}
                       className="border-b border-gray-200 hover:bg-slate-50 transition-colors"
                     >
                       <TableCell className="px-4 py-3 text-base text-gray-900 font-semibold text-center">
@@ -84,11 +90,31 @@ const TimeList = () => {
                       <TableCell className="px-4 py-3 text-base text-gray-800 text-center">
                         {entry.timeOut}
                       </TableCell>
+                      <TableCell className="px-4 py-3 text-base text-gray-800 text-center">
+                        {entry.officeWork ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            No
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="px-4 py-3 text-base font-bold text-slate-800 text-center">
                         {entry.totalHour}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-center print:hidden">
-                        <DeleteButton id={entry._id} onDelete={timeDelete} />
+                        <div className="flex justify-center items-center gap-2">
+                          <button
+                            onClick={() => setEditingEntry(entry)}
+                            className="text-blue-500 hover:text-blue-700 transition"
+                            title="Edit"
+                          >
+                            <PenSquare size={20} />
+                          </button>
+                          <DeleteButton id={entry.id} onDelete={timeDelete} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -96,7 +122,7 @@ const TimeList = () => {
                   {/* Monthly Total Row */}
                   <TableRow className="bg-slate-200 border-t-2 border-slate-400">
                     <TableCell
-                      colSpan={3}
+                      colSpan={4}
                       className="px-4 py-4 text-right font-bold text-slate-900 text-base"
                     >
                       Total Time This Month:
@@ -105,6 +131,38 @@ const TimeList = () => {
                       {monthlyTotal}
                     </TableCell>
                     <TableCell></TableCell>
+                  </TableRow>
+
+                  {/* Office Work Count Row */}
+                  <TableRow className="bg-slate-200 border-t border-slate-300">
+                    <TableCell
+                      colSpan={4}
+                      className="px-4 py-4 text-right font-bold text-slate-900 text-base"
+                    >
+                      Total Office Work Days:
+                    </TableCell>
+                    <TableCell className="px-4 py-4 text-base font-bold text-slate-900 text-center">
+                      {sortedEntries.filter(entry => entry.officeWork).length}
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+
+                  {/* Copy Button Row */}
+                  <TableRow className="bg-white border-t-0 print:hidden">
+                    <TableCell colSpan={6} className="text-center py-6">
+                      <button
+                        onClick={() => {
+                          const officeDays = sortedEntries.filter(entry => entry.officeWork).length;
+                          const textToCopy = `টোটাল কর্মঘণ্টাঃ- ${monthlyTotal.replace(' hours ', ':').replace(' mins', ':00').replace(' hour ', ':').replace(' min', ':00')}\nঅফিস উপস্থিতিঃ- ${officeDays}`;
+                          navigator.clipboard.writeText(textToCopy);
+                          toast.success("Data copied to clipboard!");
+                        }}
+                        className="px-6 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-700 transition-colors shadow-sm flex items-center gap-2 mx-auto"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                        Copy Data
+                      </button>
+                    </TableCell>
                   </TableRow>
                 </>
               )}
