@@ -35,13 +35,8 @@ export const signup = async (req, res) => {
         });
         const savedUser = await userRepository.save(newUser);
 
-        // Send token in cookie (httpOnly: false so frontend can access it if needed)
-        res.cookie('token', token, {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-        });
+        // Generate token
+        const token = generateToken(savedUser.id, savedUser.email);
 
         res.json({
             success: true,
@@ -77,12 +72,7 @@ export const login = async (req, res) => {
 
         const token = generateToken(user.id, user.email);
 
-        res.cookie('token', token, {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-        });
+
 
         res.json({
             success: true,
@@ -98,10 +88,6 @@ export const login = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-    res.cookie('token', '', {
-        httpOnly: false,
-        expires: new Date(0)
-    });
     res.json({ success: true, message: "Logged out successfully" });
 };
 

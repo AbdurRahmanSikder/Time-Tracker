@@ -23,6 +23,9 @@ const Signup = () => {
         try {
             const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, { email, password }, { withCredentials: true });
             if (res.data.success) {
+                // Manually set cookie
+                document.cookie = `token=${res.data.token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Strict${import.meta.env.VITE_BACKEND_URL.startsWith('https') ? '; Secure' : ''}`;
+
                 login(res.data.user);
                 toast.success("Account created successfully");
                 navigate("/");
