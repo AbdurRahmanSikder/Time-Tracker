@@ -23,7 +23,7 @@ const formatDate = (dateString) => {
 };
 
 const TimeList = () => {
-  const { timeEntries, timeDelete, setEditingEntry, toast } = useTimeContext();
+  const { timeEntries, timeDelete, setEditingEntry, toast, isLoading } = useTimeContext();
   const { user } = useAuth();
 
   // Calculate total time for the entire month
@@ -65,7 +65,19 @@ const TimeList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedEntries.length === 0 ? (
+              {isLoading ? (
+                // Skeleton Rows
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`} className="animate-pulse bg-gray-50/50">
+                    <TableCell className="px-4 py-3 text-center"><div className="h-5 bg-gray-200 rounded w-20 mx-auto"></div></TableCell>
+                    <TableCell className="px-4 py-3 text-center"><div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                    <TableCell className="px-4 py-3 text-center"><div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                    <TableCell className="px-4 py-3 text-center"><div className="h-5 bg-gray-200 rounded w-12 mx-auto"></div></TableCell>
+                    <TableCell className="px-4 py-3 text-center"><div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                    <TableCell className="px-4 py-3 text-center print:hidden"><div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                  </TableRow>
+                ))
+              ) : sortedEntries.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
@@ -125,7 +137,7 @@ const TimeList = () => {
                       colSpan={4}
                       className="px-4 py-4 text-right font-bold text-slate-900 text-base"
                     >
-                      Total Time This Month:
+                      Total Time:
                     </TableCell>
                     <TableCell className="px-4 py-4 text-base font-bold text-slate-900 text-center">
                       {monthlyTotal}
