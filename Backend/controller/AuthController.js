@@ -35,12 +35,9 @@ export const signup = async (req, res) => {
         });
         const savedUser = await userRepository.save(newUser);
 
-        // Generate token
-        const token = generateToken(savedUser.id, savedUser.email);
-
-        // Send token in HTTP-only cookie
+        // Send token in cookie (httpOnly: false so frontend can access it if needed)
         res.cookie('token', token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -49,6 +46,7 @@ export const signup = async (req, res) => {
         res.json({
             success: true,
             message: "User registered successfully",
+            token,
             user: { id: savedUser.id, email: savedUser.email }
         });
 
@@ -80,7 +78,7 @@ export const login = async (req, res) => {
         const token = generateToken(user.id, user.email);
 
         res.cookie('token', token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -89,6 +87,7 @@ export const login = async (req, res) => {
         res.json({
             success: true,
             message: "Logged in successfully",
+            token,
             user: { id: user.id, email: user.email }
         });
 
@@ -100,7 +99,7 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
     res.cookie('token', '', {
-        httpOnly: true,
+        httpOnly: false,
         expires: new Date(0)
     });
     res.json({ success: true, message: "Logged out successfully" });

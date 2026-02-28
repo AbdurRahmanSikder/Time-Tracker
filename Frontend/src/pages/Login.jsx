@@ -38,7 +38,6 @@ const Login = () => {
                     localStorage.removeItem('timeTrackerEmail');
                     localStorage.removeItem('timeTrackerPassword');
                 }
-
                 login(res.data.user);
                 toast.success("Logged in successfully");
                 navigate("/");
