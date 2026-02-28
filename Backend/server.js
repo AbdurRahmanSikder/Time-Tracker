@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 const port = process.env.PORT || 5000;
-const originAllowed = ['http://localhost:5173', 'https://time040.vercel.app'];
+const originAllowed = ['http://localhost:5173', 'https://time040.vercel.app', 'https://time-tracker-tos.vercel.app'];
 
 app.use(cors({
     origin: originAllowed,
