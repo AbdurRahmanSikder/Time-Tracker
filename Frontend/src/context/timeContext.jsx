@@ -3,8 +3,18 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 
-axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
+
+axios.interceptors.request.use(config => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; token=`);
+    const token = parts.length === 2 ? parts.pop().split(';').shift() : null;
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, error => Promise.reject(error));
 
 export const AppContext = createContext();
 
