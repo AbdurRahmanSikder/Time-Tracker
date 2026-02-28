@@ -61,11 +61,9 @@ export const totalHours = (entries) => {
 // Format ISO date strings
 export const formatDate = (isoString) => isoString?.split('T')[0] || '';
 
-export function countActiveDaysCurrentMonth() {
-  const today = new Date();
-  const Today = today.getDate();
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 0-indexed
+export function countActiveDaysCurrentMonth(yearStr, monthStr) {
+  const year = parseInt(yearStr);
+  const month = parseInt(monthStr) - 1; // 0-indexed month
   const lastDay = new Date(year, month + 1, 0).getDate(); // last day of month
   let count = 0;
 
@@ -90,7 +88,7 @@ export function convertToHour(time) {
     if (s)
       arr.push(Number(s));
   }
-  return arr[0]+arr[1]/60;
+  return arr[0] + arr[1] / 60;
 }
 
 export const NumberOfWorkingDays = (timeEntry) => {
@@ -100,9 +98,9 @@ export const NumberOfWorkingDays = (timeEntry) => {
 }
 // time convert
 export function decimalToTime(decimalHours) {
-  const hours = Math.floor(decimalHours); 
+  const hours = Math.floor(decimalHours);
   const minutes = Math.round((decimalHours - hours) * 60);
-  
+
   return `${hours} hours ${minutes} mins`;
 }
 
