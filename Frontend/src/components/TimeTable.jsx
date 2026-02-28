@@ -27,13 +27,14 @@ const TimeTable = () => {
     const day = String(today.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   });
-  const [timeIn, setTimeIn] = useState("00:00");
-  const [timeOut, setTimeOut] = useState("00:00");
+  const [timeIn, setTimeIn] = useState("09:00");
+  const [timeOut, setTimeOut] = useState("18:00");
   const [totalTime, setTotalTime] = useState("00:00");
   const [officeWork, setOfficeWork] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
   const [showEmptyWarning, setShowEmptyWarning] = useState(false);
   const [showClearWarning, setShowClearWarning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Populate form if editing
   useEffect(() => {
@@ -49,8 +50,8 @@ const TimeTable = () => {
       const month = String(today.getMonth() + 1).padStart(2, "0");
       const day = String(today.getDate()).padStart(2, "0");
       setDate(`${year}-${month}-${day}`);
-      setTimeIn("00:00");
-      setTimeOut("00:00");
+      setTimeIn("09:00");
+      setTimeOut("18:00");
       setOfficeWork(true);
     }
   }, [editingEntry]);
@@ -77,6 +78,7 @@ const TimeTable = () => {
       return;
     }
 
+    setIsSubmitting(true);
     if (editingEntry) {
       await timeUpdate(editingEntry.id, {
         newDate: date,
@@ -85,6 +87,7 @@ const TimeTable = () => {
         totalHour: totalTime,
         officeWork,
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -105,6 +108,7 @@ const TimeTable = () => {
     } else {
       toast.error("Something went wrong");
     }
+    setIsSubmitting(false);
   };
 
   const deleteTime = () => {
@@ -125,6 +129,7 @@ const TimeTable = () => {
   };
 
   const handleForceSubmit = async () => {
+    setIsSubmitting(true);
     if (editingEntry) {
       await timeUpdate(editingEntry.id, {
         newDate: date,
@@ -134,6 +139,7 @@ const TimeTable = () => {
         officeWork,
       });
       setShowWarning(false);
+      setIsSubmitting(false);
       return;
     }
 
@@ -161,13 +167,14 @@ const TimeTable = () => {
         const day = String(today.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       });
-      setTimeIn("00:00");
-      setTimeOut("00:00");
+      setTimeIn("09:00");
+      setTimeOut("18:00");
       setTotalTime("00:00");
       setOfficeWork(true);
     } else {
       toast.error("Something went wrong");
     }
+    setIsSubmitting(false);
   };
 
   const totalworkingHour = totalHours(timeEntries);
@@ -220,13 +227,39 @@ const TimeTable = () => {
               <TableHead className="py-2 px-4 font-semibold text-gray-700 bg-gray-50 rounded-tl-xl align-middle">
                 Date
               </TableHead>
-              <TableCell className="flex justify-end py-2 px-4 bg-gray-50 rounded-tr-xl">
+              <TableCell className="flex justify-end items-center gap-2 py-2 px-4 bg-gray-50 rounded-tr-xl">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const d = new Date(date);
+                    d.setDate(d.getDate() - 1);
+                    setDate(d.toISOString().split("T")[0]);
+                  }}
+                  className="px-2"
+                >
+                  &lt;
+                </Button>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const d = new Date(date);
+                    d.setDate(d.getDate() + 1);
+                    setDate(d.toISOString().split("T")[0]);
+                  }}
+                  className="px-2"
+                >
+                  &gt;
+                </Button>
               </TableCell>
             </TableRow>
 
@@ -297,17 +330,24 @@ const TimeTable = () => {
           </Button>
           <Button
             onClick={submitTime}
-            className="my-4 hover:cursor-pointer mx-auto px-8 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors duration-300 text-lg shadow-md"
+            disabled={isSubmitting}
+            className={`my-4 hover:cursor-pointer mx-auto px-8 py-3 text-white rounded-lg transition-colors duration-300 text-lg shadow-md flex items-center gap-2 ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-500 hover:bg-indigo-600'}`}
           >
-            {editingEntry ? "Update" : "Submit"}
+            {isSubmitting && (
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            {editingEntry ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
           </Button>
         </div>
 
         <hr className="border-gray-300" />
 
         {/* Monthly Total */}
-        <div className="px-4 py-3 text-gray-700 font-medium">
-          Total Time in This Month:{" "}
+        {/* <div className="px-4 py-3 text-gray-700 font-medium">
+          Total Time:{" "}
           <span className="text-indigo-600">{totalworkingHour}</span>
         </div>
         <div className="px-4 py-3 text-gray-700 font-medium">
@@ -315,7 +355,7 @@ const TimeTable = () => {
           <span className="text-indigo-600">
             {CurrentTimeRate ? decimalToTime(CurrentTimeRate) : "00:00"}
           </span>
-        </div>
+        </div> */}
       </div>
 
       {/* Warning Popup Modal */}
@@ -360,9 +400,16 @@ const TimeTable = () => {
               </button>
               <button
                 onClick={handleForceSubmit}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:bg-indigo-400 disabled:cursor-not-allowed"
               >
-                {editingEntry ? "Update Anyway" : "Add Anyway"}
+                {isSubmitting && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {editingEntry ? (isSubmitting ? "Updating..." : "Update Anyway") : (isSubmitting ? "Adding..." : "Add Anyway")}
               </button>
             </div>
           </div>

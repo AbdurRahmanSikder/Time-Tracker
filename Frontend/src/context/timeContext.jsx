@@ -25,6 +25,7 @@ export const TimeContextProvider = ({ children }) => {
     const [months, setMonths] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [editingEntry, setEditingEntry] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const { user } = useAuth(); // Need to trigger fetch only when user exists
 
     const fetchMonths = async () => {
@@ -45,6 +46,7 @@ export const TimeContextProvider = ({ children }) => {
 
     const fetchTimeEntries = async (monthId) => {
         if (!monthId) return; // Don't fetch if no month is selected
+        setIsLoading(true);
         try {
             const response = await axios.get(`${backendUrl}/api/timelist?monthId=${monthId}`);
             if (response.data.success) {
@@ -52,6 +54,8 @@ export const TimeContextProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Error fetching time entries:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -113,7 +117,7 @@ export const TimeContextProvider = ({ children }) => {
         }
     }, [selectedMonth]);
 
-    const value = { timeEntries, setTimeEntries, fetchTimeEntries, timeDelete, timeUpdate, editingEntry, setEditingEntry, axios, toast, months, selectedMonth, setSelectedMonth, fetchMonths };
+    const value = { timeEntries, setTimeEntries, fetchTimeEntries, timeDelete, timeUpdate, editingEntry, setEditingEntry, axios, toast, months, selectedMonth, setSelectedMonth, fetchMonths, isLoading };
     return <AppContext.Provider value={value}>
         {children}
     </AppContext.Provider>
